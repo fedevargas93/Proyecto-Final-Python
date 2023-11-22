@@ -4,45 +4,72 @@ import numpy as np
 import plotly.graph_objects as go
 import streamlit as st
 from streamlit_option_menu import option_menu
+    
+st.title("Final project Python Candlestick Graph")
 
+add_multiselect = st.multiselect(
+    "Choose the following available coins",
+    ("Bitcoin" , "Ethereum", "Tether", "USD Coin", "Binance Coin")
+)
+
+go_button = st.button("Go")
+
+
+if "Bitcoin" in add_multiselect:
+    st.write("Display Bitcoin information or candlestick chart here")
+    # Puedes agregar información detallada o un gráfico de velas para Bitcoin
+elif "Ethereum" in add_multiselect:
+    st.write("Display Ethereum information or candlestick chart here")
+    # Puedes agregar información detallada o un gráfico de velas para Ethereum
+
+elif "Tether" in add_multiselect:
+    st.write("Display Ethereum information or candlestick chart here")
+
+elif "USD Coin" in add_multiselect:
+    st.write("Display Ethereum information or candlestick chart here")
+
+elif "Binance Coin" in add_multiselect:
+    st.write("Display Ethereum information or candlestick chart here")
+
+else:
+    st.write("Please choose an appropriate Coin")
+
+# Dictionary to map the selected cryptocurrency to its corresponding pair:
+pair_mapping = {
+    "Bitcoin": "XBTUSD",
+    "Ethereum": "ETHUSD",
+    "Tether": "USDTUSD",
+    "USD Coin": "USDCUSD",
+    "Binance Coin": "BNBUSD",
+}
 
 # Request OHLC data from Kraken API
 url_ohlc = "https://api.kraken.com/0/public/OHLC"
-req_params = {
-    "pair": "XBTUSD",
-    "interval": 60,
-}
-result = requests.get(url_ohlc, params=req_params).json()["result"]
+selected_pair = pair_mapping.get(add_multiselect[0])
 
-# Convert data to Pandas DataFrame
-ohlc = pd.DataFrame(result[list(result.keys())[0]], columns=["datetime", "open", "high", "low", "close", "vwap", "volume", "count"])
-ohlc = ohlc.astype({'open': float, 'high': float, 'low': float, 'close': float, 'vwap': float, 'volume': float})
-ohlc.index = pd.to_datetime(ohlc["datetime"], unit='s')
+if selected_pair:
+    req_params = {
+        "pair": selected_pair,
+        "interval": 60,
+    }
+    response = requests.get(url_ohlc, params=req_params)
 
+    if response.status_code == 200:
+        result = response.json().get("result", {})
 
+        if result and list(result.keys()) and len(result[list(result.keys())[0]]) > 0:
+            # Convertir datos a DataFrame de Pandas
+            ohlc = pd.DataFrame(result[list(result.keys())[0]], columns=["datetime", "open", "high", "low", "close", "vwap", "volume", "count"])
+            ohlc = ohlc.astype({'open': float, 'high': float, 'low': float, 'close': float, 'vwap': float, 'volume': float})
+            ohlc.index = pd.to_datetime(ohlc["datetime"], unit='s')
+        else:
+            st.warning("No valid data available for the selected cryptocurrency pair.")
+    else:
+        st.warning("Error in API response. Please try again.")
+else:
+    st.warning("Please choose an appropriate Coin")
 
 # Assuming ohlc is the DataFrame containing the OHLC data
-
-# Create a candlestick chart using the fetched OHLC data
-fig = go.Figure(data=[go.Candlestick(
-    x=ohlc.index,
-    open=ohlc['open'],
-    high=ohlc['high'],
-    low=ohlc['low'],
-    close=ohlc['close']
-)])
-
-st.title('Bitcoin (XBT/USD) Candlestick Chart')
-
-# Create a candlestick chart using the fetched OHLC data
-fig = go.Figure(data=[go.Candlestick(
-    x=ohlc.index,
-    open=ohlc['open'],
-    high=ohlc['high'],
-    low=ohlc['low'],
-    close=ohlc['close']
-)])
-
 
 # Stocastic oscillator
 def gradient_descent(
@@ -66,43 +93,51 @@ learn_rate = 0.1  # Example learning rate
 optimized_value = gradient_descent(gradient_function, start, learn_rate)
 st.write("Optimized value:", optimized_value)
 
-# Now, let's add the gradient descent result to the graph
-fig.add_trace(go.Scatter(x=[ohlc.index[0], ohlc.index[-1]], y=[start, optimized_value], mode='lines', name='Gradient Descent'))
+# Create a candlestick chart using the fetched OHLC data
+fig = go.Figure()
 
-# Display the candlestick chart with the gradient descent line
-st.plotly_chart(fig)
+if add_multiselect:
+    # Visualización de un gráfico de velas para la criptomoneda seleccionada
+    fig.add_trace(go.Candlestick(
+        x=ohlc.index,
+        open=ohlc['open'],
+        high=ohlc['high'],
+        low=ohlc['low'],
+        close=ohlc['close']
+    ))
 
-st.title("Final project Python Candlestick Graph")
+    # Personalizar la tabla
+    fig.update_layout(
+        title=f'Candlestick Chart for {add_multiselect[0]}',
+        xaxis_title='Date',
+        yaxis_title='Price',
+        template='plotly_dark'
+    )
 
-add_multiselect = st.multiselect("Chose the following available coins",
-    ("Bitcoin" , "Ethereum", "Tether", "USD Coin", "Binance Coin")
-)
+    # Visualizar la tabla
+    st.plotly_chart(fig)
 
-go_button = st.button("Go")
+    # Show the info  
+    st.subheader("Kraken OHLC Data")
+    st.write(ohlc)
 
+    st.title(f'{add_multiselect[0]} Candlestick Chart')
 
-if add_multiselect == "Bitcoin":
-    st.write("Display Bitcoin information or candlestick chart here")
-    # You can add more detailed information or a candlestick chart for Bitcoin
-elif add_multiselect == "Ethereum":
-    st.write("Display Ethereum information or candlestick chart here")
-    # You can add more detailed information or a candlestick chart for Ethereum
+    # Create a candlestick chart using the fetched OHLC data
+    fig = go.Figure(data=[go.Candlestick(
+        x=ohlc.index,
+        open=ohlc['open'],
+        high=ohlc['high'],
+        low=ohlc['low'],
+        close=ohlc['close']
+    )])
 
-elif add_multiselect == "Tether":
-    st.write("Display Tether information or candlestick chart here")
+    # Now, let's add the gradient descent result to the graph
+    fig.add_trace(go.Scatter(x=[ohlc.index[0], ohlc.index[-1]], y=[start, optimized_value], mode='lines', name='Gradient Descent'))
 
-elif add_multiselect == "USD Coin":
-    st.write("Display USD Coin information or candlestick chart here")
+    # Display the candlestick chart with the gradient descent line
+    st.plotly_chart(fig)
 
-elif add_multiselect == "Binance Coin":
-    st.write("Display Binance Coin information or candlestick chart here")
-
-else:
-    print("Please chose an appropiate Coin")
-
-#  Home button
-if st.button("Home"):
-    st.write("You clicked on the Home button!")
-
-
-
+    # Home button
+    if st.button("Home"):
+        st.write("You clicked on the Home button!")
