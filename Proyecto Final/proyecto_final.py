@@ -1,78 +1,138 @@
 import requests
 import pandas as pd
-import numpy as np 
+import numpy as np
 import plotly.graph_objects as go
 import streamlit as st
-import custom_menu
-import indicadores
+
+# Function to fetch OHLC data
+def fetch_ohlc_data(pair):
+    url_ohlc = f"https://api.kraken.com/0/public/OHLC?pair={pair}&interval=60"
+    response = requests.get(url_ohlc)
+
+    if response.status_code == 200:
+        result = response.json().get("result", {})
+        
+        if result and len(list(result.keys())) and len(result[list(result.keys())[0]]) > 0:
+            ohlc = pd.DataFrame(result[list(result.keys())[0]],
+                                columns=["datetime", "open", "high", "low", "close", "vwap", "volume", "count"])
+            
+            ohlc = ohlc.astype(
+                {'open': float, 'high': float, 'low': float, 'close': float, 'vwap': float, 'volume': float})
+            ohlc.index = pd.to_datetime(ohlc["datetime"], unit='s')
+            return ohlc
+        else:
+            st.warning("No valid data available for the selected cryptocurrency pair.")
+            return None
+    else:
+        st.warning("Error in API response. Please try again.")
+        return None
+
+# Function to calculate Stochastic Oscillator values
+def calculate_stochastic_oscillator(ohlc):
+    # Calculate %K and %D
+    ohlc['low_min'] = ohlc['low'].rolling(window=14).min()
+    ohlc['high_max'] = ohlc['high'].rolling(window=14).max()
+
+    ohlc['%K'] = (ohlc['close'] - ohlc['low_min']) / (ohlc['high_max'] - ohlc['low_min']) * 100
+    ohlc['%D'] = ohlc['%K'].rolling(window=3).mean()
 
 
-# Request OHLC data from Kraken API
-url_ohlc = "https://api.kraken.com/0/public/OHLC"
-req_params = {
-    "pair": "XBTUSD",
-    "interval": 60,
-}
-result = requests.get(url_ohlc, params=req_params).json()["result"]
+    # Drop temporary columns used in calculations
+    ohlc.drop(['low_min', 'high_max'], axis=1, inplace=True)
 
-# Convert data to Pandas DataFrame
-ohlc = pd.DataFrame(result[list(result.keys())[0]], columns=["datetime", "open", "high", "low", "close", "vwap", "volume", "count"])
-ohlc = ohlc.astype({'open': float, 'high': float, 'low': float, 'close': float, 'vwap': float, 'volume': float})
-ohlc.index = pd.to_datetime(ohlc["datetime"], unit='s')
+    return ohlc
 
+st.title("Final project Python Candlestick Graph")
 
+try:
+    add_multiselect = st.multiselect(
+        "Choose two of the following available coins",
+        ("Bitcoin", "Ethereum", "Tether", "USD Coin")
+    )
 
-# Assuming ohlc is the DataFrame containing the OHLC data
+    go_button = st.button("Go")
 
-# Create a candlestick chart using the fetched OHLC data
-fig = go.Figure(data=[go.Candlestick(
-    x=ohlc.index,
-    open=ohlc['open'],
-    high=ohlc['high'],
-    low=ohlc['low'],
-    close=ohlc['close']
-)])
+    # Dictionary to map the selected cryptocurrency to its corresponding pair:
+    pair_mapping = {
+        "Bitcoin": "XBTUSD",
+        "Ethereum": "ETHUSD",
+        "Tether": "USDTUSD",
+        "USD Coin": "USDCUSD",
+    }
 
-st.title('Bitcoin (XBT/USD) Candlestick Chart')
+    # Fetch OHLC data for selected cryptocurrencies
+    ohlc_data = {}
+    if go_button:
+        for crypto in add_multiselect:
+            selected_pair = pair_mapping.get(crypto)
+            if selected_pair:
+                ohlc_data[crypto] = fetch_ohlc_data(selected_pair)
+                # Calculate stochastic oscillator values
+                ohlc_data[crypto] = calculate_stochastic_oscillator(ohlc_data[crypto])
 
-# Create a candlestick chart using the fetched OHLC data
-fig = go.Figure(data=[go.Candlestick(
-    x=ohlc.index,
-    open=ohlc['open'],
-    high=ohlc['high'],
-    low=ohlc['low'],
-    close=ohlc['close']
-)])
+    # Create separate Figure objects for Candlestick Chart and Stochastic Oscillator
+    candlestick_fig = go.Figure()
+    stochastic_fig = go.Figure()
 
-
-# Stocastic oscillator
-def gradient_descent(
-    gradient, start, learn_rate, n_iter=50, tolerance=1e-06
-):
-    vector = start
-    for _ in range(n_iter):
-        diff = -learn_rate * gradient(vector)
-        if np.all(np.abs(diff) <= tolerance):
-            break
-        vector += diff
-    return vector
-
-# Example gradient function (replace this with your actual gradient function)
-def gradient_function(x):
-    return 2 * x
-
-# Example usage of gradient descent (change parameters as needed)
-start = 10  # Example start point
-learn_rate = 0.1  # Example learning rate
-optimized_value = gradient_descent(gradient_function, start, learn_rate)
-st.write("Optimized value:", optimized_value)
-
-# Now, let's add the gradient descent result to the graph
-fig.add_trace(go.Scatter(x=[ohlc.index[0], ohlc.index[-1]], y=[start, optimized_value], mode='lines', name='Gradient Descent'))
-
-# Display the candlestick chart with the gradient descent line
-st.plotly_chart(fig)
+    # Visualization of a candlestick chart for the selected cryptocurrencies
+    for crypto, ohlc in ohlc_data.items():
+        candlestick_fig.add_trace(go.Candlestick(
+            x=ohlc.index,
+            open=ohlc['open'],
+            high=ohlc['high'],
+            low=ohlc['low'],
+            close=ohlc['close'],
+            name=f"{crypto} - {ohlc.index[0].strftime('%Y-%m-%d')} to {ohlc.index[-1].strftime('%Y-%m-%d')}"
+     ))
+        #Visualization of a volumen chart for the selected cryptocurrencies
+        candlestick_fig.add_trace(go.Bar(
+            x=ohlc.index,
+            y=ohlc['volume'],
+            name=f"Volume - {crypto}",
+            yaxis='y2',  # Utiliza el segundo eje y para el volumen
+            marker=dict(color='rgba(255, 0, 0, 0.5)')  # Puedes ajustar el color según tus preferencias
+        ))
+        # Check if %K and %D columns are present before adding traces
+        if '%K' in ohlc.columns and '%D' in ohlc.columns:
+            # Add stochastic oscillator traces to the separate figure
+            stochastic_fig.add_trace(go.Scatter(x=ohlc.index, y=ohlc['%K'], name=f"%K - {crypto}", line=dict(color='#ff9900', width=2)))
+            stochastic_fig.add_trace(go.Scatter(x=ohlc.index, y=ohlc['%D'], name=f"%D - {crypto}", line=dict(color='#000000', width=2)))
 
 
+    # Customize the layout for Candlestick Chart
+    candlestick_fig.update_layout(
+        title=f'Candlestick chart with Volume for {add_multiselect[0]} and {add_multiselect[1]}',
+        xaxis_title='Date',
+        yaxis_title='Price',
+        yaxis2=dict(
+            title='Volume',
+            overlaying='y',
+            side='right'
+        ),
+        template='plotly_dark'
+    )
+
+    # Customize the layout for Stochastic Oscillator
+    stochastic_fig.update_layout(
+        title=f'Stochastic Oscillator for {add_multiselect[0]} and {add_multiselect[1]}',
+        xaxis_title='Date',
+        yaxis_title='Value',
+        template='plotly_dark'
+    )
+        
+
+    # Display the charts
+    st.plotly_chart(candlestick_fig, use_container_width=True)  
+    st.plotly_chart(stochastic_fig, use_container_width=True)
+
+    # Display other relevant information
+    for crypto, ohlc in ohlc_data.items():
+        st.subheader(f'OHLC Data for {crypto}')
+        st.write(ohlc)
 
 
+    # Home button
+    if st.button("Home"):
+        st.write("You clicked on the Home button!")
+except IndexError:
+    st.warning("Please select at least one cryptocurrency.")     
