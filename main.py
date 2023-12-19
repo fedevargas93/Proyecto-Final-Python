@@ -61,7 +61,7 @@ go_button = menu_container.button("Go")
 pair_mapping = {
     "Bitcoin": "XXBTZUSD",
     "Ethereum": "XETHZUSD",
-    "Tether": "USDTZUSD"
+    "Tether": "USDTZUSD",
     "USD Coin": "USDCUSD",
     "Doge Coin": "XDGUSD",
 }
