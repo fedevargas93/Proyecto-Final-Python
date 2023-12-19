@@ -52,7 +52,7 @@ menu_container.subheader("Welcome to the Candlestick Graph Viewer App!")
 
 add_multiselect = menu_container.multiselect(
     "Choose the following available coins",
-    ("Bitcoin", "Ethereum", "Tether", "USD Coin", "Doge Coin")
+    ("Bitcoin", "Ethereum", "Tether", "USD Coin", "Doge Coin", "Solana", "Binance", "XRP", "Cardano", "Avalanche")
 )
 
 go_button = menu_container.button("Go")
@@ -64,6 +64,11 @@ pair_mapping = {
     "Tether": "USDTZUSD",
     "USD Coin": "USDCUSD",
     "Doge Coin": "XDGUSD",
+    "Solana": "SOLUSD",
+    "Binance": "BNBUSD",
+    "XRP": "XRPUSD",
+    "Cardano": "ADAUSD",
+    "Avalanche": "AVAXUSD",
 }
 
 # Fetch OHLC data for selected cryptocurrencies
