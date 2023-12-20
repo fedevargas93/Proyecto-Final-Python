@@ -137,7 +137,7 @@ for crypto, ohlc in ohlc_data.items():
 
 # Customize the layout for Stochastic Oscillator
 stochastic_fig.update_layout(
-    title=f'Stochastic Oscillator for {", ".join(add_multiselect)}',
+    title=f'Stochastic Oscillator for {", ".join(selected_crypto)}',
     xaxis_title='Date',
     yaxis_title='Value',
     template='plotly_dark'
@@ -145,7 +145,7 @@ stochastic_fig.update_layout(
 
 # Customize the layout for Moving Average
 ma_fig.update_layout(
-    title=f'Moving Average for {", ".join(add_multiselect)}',
+    title=f'Moving Average for {", ".join(selected_crypto)}',
     xaxis_title='Date',
     yaxis_title='Moving Average',
     template='plotly_dark'
