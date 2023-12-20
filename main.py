@@ -145,7 +145,7 @@ stochastic_fig.update_layout(
 
 # Customize the layout for Moving Average
 ma_fig.update_layout(
-    title=f'Moving Average for {", ".join(selected_crypto)}',
+    title=f'Moving Average for {selected_crypto}',
     xaxis_title='Date',
     yaxis_title='Moving Average',
     template='plotly_dark'
