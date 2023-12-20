@@ -105,20 +105,12 @@ for crypto, ohlc in ohlc_data.items():
         decreasing_line_color='red'
     ))
 
-# Visualization of Stochastic Oscillator with new ranges
+# Visualization of a Stochastic Oscillator for the selected cryptocurrencies
 for crypto, ohlc in ohlc_data.items():
     stochastic_fig.add_trace(go.Scatter(x=ohlc.index, y=ohlc['%K'], name=f"%K - {crypto}", line=dict(color='#ff9900', width=2)))
     stochastic_fig.add_trace(go.Scatter(x=ohlc.index, y=ohlc['%D'], name=f"%D - {crypto}", line=dict(color='#000000', width=2)))
-
-    # Overbought and Oversold lines
-    stochastic_fig.add_trace(go.Scatter(x=ohlc.index, y=ohlc['Overbought'], name="Overbought (80-100)", line=dict(color='red', width=1)))
-    stochastic_fig.add_trace(go.Scatter(x=ohlc.index, y=ohlc['Oversold'], name="Oversold (0-20)", line=dict(color='blue', width=1)))
-
-    # Expected range shading
-    stochastic_fig.add_trace(go.Scatter(x=ohlc.index, y=ohlc['Expected_Max'], mode='lines', name="Expected Upper Bound", line=dict(color='green', width=1)))
-    stochastic_fig.add_trace(go.Scatter(x=ohlc.index, y=ohlc['Expected_Min'], mode='lines', fill='tonexty', name="Expected Lower Bound", line=dict(color='green', width=1)))
-
-
+    stochastic_fig.add_trace(go.Scatter(x=ohlc.index, y=ohlc['Overbought'], name="Overbought", line=dict(color='red', width=1), fill='tozeroy'))
+    stochastic_fig.add_trace(go.Scatter(x=ohlc.index, y=ohlc['Oversold'], name="Oversold", line=dict(color='green', width=1), fill='tozeroy'))
 
 # Visualization of a Moving Average for the selected cryptocurrencies
 for crypto, ohlc in ohlc_data.items():
