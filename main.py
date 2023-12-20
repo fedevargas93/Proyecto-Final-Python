@@ -51,17 +51,20 @@ def calculate_moving_average(ohlc, window):
     ohlc['MA'] = ohlc['close'].rolling(window=window).mean()
     return ohlc
 
+# [Function definitions remain unchanged]
+
 # Set up the layout with buttons and dropdown in a panel on the left
 menu_container = st.sidebar.container()
 menu_container.subheader("Welcome to the Candlestick Graph Viewer App!")
 
-#Single selection of cryptocurrencies based on a dropdown menu
+# Changed from multiselect to selectbox for a single selection
 selected_crypto = menu_container.selectbox(
-    "Choose a cryptocurrency",
+    "Choose a coin",
     ("Bitcoin", "Ethereum", "Tether", "USD Coin", "Doge Coin", "Solana", "XRP", "Cardano", "Avalanche")
-
+)
 
 go_button = menu_container.button("Go")
+
 
 # Dictionary to map the selected cryptocurrency to its corresponding pair:
 pair_mapping = {
