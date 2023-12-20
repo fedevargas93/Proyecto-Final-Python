@@ -137,7 +137,7 @@ for crypto, ohlc in ohlc_data.items():
 
 # Customize the layout for Stochastic Oscillator
 stochastic_fig.update_layout(
-    title=f'Stochastic Oscillator for {", ".join(selected_crypto)}',
+    title=f'Stochastic Oscillator for {selected_crypto}',
     xaxis_title='Date',
     yaxis_title='Value',
     template='plotly_dark'
