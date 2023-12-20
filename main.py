@@ -51,15 +51,14 @@ def calculate_moving_average(ohlc, window):
     ohlc['MA'] = ohlc['close'].rolling(window=window).mean()
     return ohlc
 
-# [Function definitions remain unchanged]
 
 # Set up the layout with buttons and dropdown in a panel on the left
 menu_container = st.sidebar.container()
 menu_container.subheader("Welcome to the Candlestick Graph Viewer App!")
 
-# Changed from multiselect to selectbox for a single selection
+# Single selection of cryptocurrencies based on a dropdown menu
 selected_crypto = menu_container.selectbox(
-    "Choose a coin",
+    "Choose a cryptocurrency",
     ("Bitcoin", "Ethereum", "Tether", "USD Coin", "Doge Coin", "Solana", "XRP", "Cardano", "Avalanche")
 )
 
@@ -115,6 +114,8 @@ if selected_crypto in ohlc_data:
         xaxis_title='Date',
         yaxis_title='Price',
         template='plotly_dark'
+    )
+
 
 # Visualization of Stochastic Oscillator with new ranges
 for crypto, ohlc in ohlc_data.items():
@@ -155,6 +156,7 @@ st.plotly_chart(candlestick_fig)
 st.plotly_chart(stochastic_fig)
 st.plotly_chart(ma_fig)
 
+
 # Display other relevant information
 for crypto, ohlc in ohlc_data.items():
     st.subheader(f'OHLC Data for {crypto}')
@@ -163,3 +165,4 @@ for crypto, ohlc in ohlc_data.items():
 # Home button
 if menu_container.button("Home"):
     st.write("You clicked on the Home button!")
+
