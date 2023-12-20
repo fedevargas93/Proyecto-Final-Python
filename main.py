@@ -23,7 +23,6 @@ def fetch_ohlc_data(pair):
         st.warning("Error in API response. Please try again.")
         return None
 
-# Function to calculate Stochastic Oscillator values
 
 # Function to calculate Stochastic Oscillator values
 def calculate_stochastic_oscillator(ohlc):
@@ -46,6 +45,7 @@ def calculate_stochastic_oscillator(ohlc):
     return ohlc
 
 
+
 # Function to calculate Moving Average
 def calculate_moving_average(ohlc, window):
     ohlc['MA'] = ohlc['close'].rolling(window=window).mean()
@@ -55,10 +55,11 @@ def calculate_moving_average(ohlc, window):
 menu_container = st.sidebar.container()
 menu_container.subheader("Welcome to the Candlestick Graph Viewer App!")
 
-add_multiselect = menu_container.multiselect(
-    "Choose the following available coins",
+#Single selection of cryptocurrencies based on a dropdown menu
+selected_crypto = menu_container.selectbox(
+    "Choose a cryptocurrency",
     ("Bitcoin", "Ethereum", "Tether", "USD Coin", "Doge Coin", "Solana", "XRP", "Cardano", "Avalanche")
-)
+
 
 go_button = menu_container.button("Go")
 
@@ -75,60 +76,60 @@ pair_mapping = {
     "Avalanche": "AVAXUSD",
 }
 
-# Fetch OHLC data for selected cryptocurrencies
+# Fetch OHLC data for the selected cryptocurrency
 ohlc_data = {}
 if go_button:
-    for crypto in add_multiselect:
-        selected_pair = pair_mapping.get(crypto)
-        if selected_pair:
-            ohlc_data[crypto] = fetch_ohlc_data(selected_pair)
-            # Calculate stochastic oscillator values
-            ohlc_data[crypto] = calculate_stochastic_oscillator(ohlc_data[crypto])
-            # Calculate moving average with a window of 10
-            ohlc_data[crypto] = calculate_moving_average(ohlc_data[crypto], window=10)
+    selected_pair = pair_mapping.get(selected_crypto)
+    if selected_pair:
+        ohlc = fetch_ohlc_data(selected_pair)
+        ohlc = calculate_stochastic_oscillator(ohlc)
+        ohlc = calculate_moving_average(ohlc, window=10)
+        ohlc_data[selected_crypto] = ohlc
 
 # Create separate Figure objects for Candlestick Chart, Stochastic Oscillator, and Moving Average
 candlestick_fig = go.Figure()
 stochastic_fig = go.Figure()
 ma_fig = go.Figure()
 
-# Visualization of a candlestick chart for the selected cryptocurrencies
-for crypto, ohlc in ohlc_data.items():
+
+# Visualization of a candlestick chart for the selected cryptocurrency
+if selected_crypto in ohlc_data:
+    ohlc = ohlc_data[selected_crypto]
     candlestick_fig.add_trace(go.Candlestick(
         x=ohlc.index,
         open=ohlc['open'],
         high=ohlc['high'],
         low=ohlc['low'],
         close=ohlc['close'],
-        name=f"{crypto} - {ohlc.index[0].strftime('%Y-%m-%d')} to {ohlc.index[-1].strftime('%Y-%m-%d')}",
+        name=f"{selected_crypto} - {ohlc.index[0].strftime('%Y-%m-%d')} to {ohlc.index[-1].strftime('%Y-%m-%d')}",
         increasing_line_color='green',
         decreasing_line_color='red'
     ))
 
-# Visualization of a Stochastic Oscillator for the selected cryptocurrencies
+    # Customize the layout for Candlestick Chart with dynamic title
+    candlestick_fig.update_layout(
+        title=f'Candlestick chart for {selected_crypto}',
+        xaxis_title='Date',
+        yaxis_title='Price',
+        template='plotly_dark'
+
+# Visualization of Stochastic Oscillator with new ranges
 for crypto, ohlc in ohlc_data.items():
     stochastic_fig.add_trace(go.Scatter(x=ohlc.index, y=ohlc['%K'], name=f"%K - {crypto}", line=dict(color='#ff9900', width=2)))
     stochastic_fig.add_trace(go.Scatter(x=ohlc.index, y=ohlc['%D'], name=f"%D - {crypto}", line=dict(color='#000000', width=2)))
-    stochastic_fig.add_trace(go.Scatter(x=ohlc.index, y=ohlc['Overbought'], name="Overbought", line=dict(color='red', width=1), fill='tozeroy'))
-    stochastic_fig.add_trace(go.Scatter(x=ohlc.index, y=ohlc['Oversold'], name="Oversold", line=dict(color='green', width=1), fill='tozeroy'))
+
+    # Overbought and Oversold lines
+    stochastic_fig.add_trace(go.Scatter(x=ohlc.index, y=ohlc['Overbought'], name="Overbought (80-100)", line=dict(color='red', width=1)))
+    stochastic_fig.add_trace(go.Scatter(x=ohlc.index, y=ohlc['Oversold'], name="Oversold (0-20)", line=dict(color='blue', width=1)))
+
+    # Expected range shading
+    stochastic_fig.add_trace(go.Scatter(x=ohlc.index, y=ohlc['Expected_Max'], mode='lines', name="Expected Upper Bound", line=dict(color='green', width=1)))
+    stochastic_fig.add_trace(go.Scatter(x=ohlc.index, y=ohlc['Expected_Min'], mode='lines', fill='tonexty', name="Expected Lower Bound", line=dict(color='green', width=1)))
+
 
 # Visualization of a Moving Average for the selected cryptocurrencies
 for crypto, ohlc in ohlc_data.items():
     ma_fig.add_trace(go.Scatter(x=ohlc.index, y=ohlc['MA'], name=f"MA - {crypto}", line=dict(color='#00cc00', width=2)))
-
-# Customize the layout for Candlestick Chart
-try:
-    if add_multiselect and len(add_multiselect) >= 2:
-        candlestick_fig.update_layout(
-            title=f'Candlestick chart for {", ".join(add_multiselect)}',
-            xaxis_title='Date',
-            yaxis_title='Price',
-            template='plotly_dark'
-        )
-    else:
-        st.warning("Select at least 1 cryptocurrency to display the candlestick chart.")
-except IndexError:
-    st.warning("An error occurred while accessing the selected cryptocurrencies. Please try again.")
 
 # Customize the layout for Stochastic Oscillator
 stochastic_fig.update_layout(
