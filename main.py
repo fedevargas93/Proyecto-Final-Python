@@ -91,9 +91,7 @@ if go_button:
         ohlc_data[selected_crypto] = ohlc
 
 # Create separate Figure objects for Candlestick Chart, Stochastic Oscillator, and Moving Average
-#candlestick_fig = go.Figure()
 stochastic_fig = go.Figure()
-#ma_fig = go.Figure()
 
 fig = go.Figure()
 fig = make_subplots(rows=2, cols=1,
@@ -164,18 +162,12 @@ stochastic_fig.update_layout(
     template='plotly_dark'
 )
 
-# Customize the layout for Moving Average
-#ma_fig.update_layout(
-#    title=f'Moving Average for {selected_crypto}',
-#    xaxis_title='Date',
-#    yaxis_title='Moving Average',
-#    template='plotly_dark'
-#)
+
 
 # Display the charts
 st.plotly_chart(fig)
 st.plotly_chart(stochastic_fig)
-#st.plotly_chart(ma_fig)
+
 
 
 # Display other relevant information
