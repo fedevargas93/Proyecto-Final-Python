@@ -97,6 +97,7 @@ fig = go.Figure()
 fig = make_subplots(rows=2, cols=1,
                     shared_xaxes=True,
                     row_heights=[0.8, 0.2],
+                    vertical_spacing = 0.40
                     )
 
 fig.for_each_xaxis(lambda x: x.update(showticklabels=True))
@@ -122,6 +123,20 @@ if selected_crypto in ohlc_data:
     row=2, col=1
 
 )
+
+
+    
+    fig.add_annotation(
+        text=f"Volume Graph for {selected_crypto}",
+        xref="paper", yref="paper",
+        x=0.5, y=0.25, # Adjust these values to position the title correctly
+        showarrow=False,
+        font=dict(size=18), # You can adjust the font size here
+        align="right"
+    )  
+
+    
+
 
     # Customize the layout for Candlestick Chart with dynamic title
     fig.update_layout(
