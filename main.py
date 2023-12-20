@@ -1,7 +1,9 @@
 import requests
 import pandas as pd
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 import streamlit as st
+from datetime import date, datetime
 
 # Function to fetch OHLC data
 def fetch_ohlc_data(pair):
@@ -89,33 +91,52 @@ if go_button:
         ohlc_data[selected_crypto] = ohlc
 
 # Create separate Figure objects for Candlestick Chart, Stochastic Oscillator, and Moving Average
-candlestick_fig = go.Figure()
+#candlestick_fig = go.Figure()
 stochastic_fig = go.Figure()
-ma_fig = go.Figure()
+#ma_fig = go.Figure()
+
+fig = go.Figure()
+fig = make_subplots(rows=2, cols=1,
+                    shared_xaxes=True,
+                    row_heights=[0.8, 0.2],
+                    )
+
+fig.for_each_xaxis(lambda x: x.update(showticklabels=True))
 
 
 # Visualization of a candlestick chart for the selected cryptocurrency
 if selected_crypto in ohlc_data:
     ohlc = ohlc_data[selected_crypto]
-    candlestick_fig.add_trace(go.Candlestick(
+    fig.add_trace(go.Candlestick(
         x=ohlc.index,
         open=ohlc['open'],
         high=ohlc['high'],
         low=ohlc['low'],
         close=ohlc['close'],
-        name=f"{selected_crypto} - {ohlc.index[0].strftime('%Y-%m-%d')} to {ohlc.index[-1].strftime('%Y-%m-%d')}",
-        increasing_line_color='green',
-        decreasing_line_color='red'
-    ))
+        name=f"{selected_crypto} - {ohlc.index[0].strftime('%Y-%m-%d')} to {ohlc.index[-1].strftime('%Y-%m-%d')}"),
+        row=1, col=1
+    )
+
+    fig.add_trace(go.Bar(
+    x=ohlc.index,
+    y=ohlc['volume'],
+    name='Volume',),
+    row=2, col=1
+
+)
 
     # Customize the layout for Candlestick Chart with dynamic title
-    candlestick_fig.update_layout(
+    fig.update_layout(
         title=f'Candlestick chart for {selected_crypto}',
         xaxis_title='Date',
         yaxis_title='Price',
-        template='plotly_dark'
+        template='plotly_dark',
+        width=800, height=800
     )
-
+    fig.update_xaxes(rangeslider_visible=False)
+    epoch_timestamp = int(1700697600)
+    datetime_obj = datetime.utcfromtimestamp(epoch_timestamp)
+    fig.update_yaxes(range=[str(datetime_obj) ,ohlc['high'].max()+ohlc['high'].min()])
 
 # Visualization of Stochastic Oscillator with new ranges
 for crypto, ohlc in ohlc_data.items():
@@ -133,7 +154,7 @@ for crypto, ohlc in ohlc_data.items():
 
 # Visualization of a Moving Average for the selected cryptocurrencies
 for crypto, ohlc in ohlc_data.items():
-    ma_fig.add_trace(go.Scatter(x=ohlc.index, y=ohlc['MA'], name=f"MA - {crypto}", line=dict(color='#00cc00', width=2)))
+    fig.add_trace(go.Scatter(x=ohlc.index, y=ohlc['MA'], name=f"MA - {crypto}", line=dict(color='#00cc00', width=2)), row=1, col=1)
 
 # Customize the layout for Stochastic Oscillator
 stochastic_fig.update_layout(
@@ -144,17 +165,17 @@ stochastic_fig.update_layout(
 )
 
 # Customize the layout for Moving Average
-ma_fig.update_layout(
-    title=f'Moving Average for {selected_crypto}',
-    xaxis_title='Date',
-    yaxis_title='Moving Average',
-    template='plotly_dark'
-)
+#ma_fig.update_layout(
+#    title=f'Moving Average for {selected_crypto}',
+#    xaxis_title='Date',
+#    yaxis_title='Moving Average',
+#    template='plotly_dark'
+#)
 
 # Display the charts
-st.plotly_chart(candlestick_fig)
+st.plotly_chart(fig)
 st.plotly_chart(stochastic_fig)
-st.plotly_chart(ma_fig)
+#st.plotly_chart(ma_fig)
 
 
 # Display other relevant information
