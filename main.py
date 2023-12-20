@@ -24,6 +24,8 @@ def fetch_ohlc_data(pair):
         return None
 
 # Function to calculate Stochastic Oscillator values
+
+# Function to calculate Stochastic Oscillator values
 def calculate_stochastic_oscillator(ohlc):
     # Calculate %K and %D
     ohlc['low_min'] = ohlc['low'].rolling(window=14).min()
@@ -32,14 +34,17 @@ def calculate_stochastic_oscillator(ohlc):
     ohlc['%K'] = (ohlc['close'] - ohlc['low_min']) / (ohlc['high_max'] - ohlc['low_min']) * 100
     ohlc['%D'] = ohlc['%K'].rolling(window=3).mean()
 
-    # Add overbought and oversold indicators
+    # Add indicators for overbought, expected, and oversold
     ohlc['Overbought'] = 80
+    ohlc['Expected_Max'] = 80  # Upper limit for expected range
+    ohlc['Expected_Min'] = 20  # Lower limit for expected range
     ohlc['Oversold'] = 20
 
     # Drop temporary columns used in calculations
     ohlc.drop(['low_min', 'high_max'], axis=1, inplace=True)
 
     return ohlc
+
 
 # Function to calculate Moving Average
 def calculate_moving_average(ohlc, window):
@@ -100,12 +105,20 @@ for crypto, ohlc in ohlc_data.items():
         decreasing_line_color='red'
     ))
 
-# Visualization of a Stochastic Oscillator for the selected cryptocurrencies
+# Visualization of Stochastic Oscillator with new ranges
 for crypto, ohlc in ohlc_data.items():
     stochastic_fig.add_trace(go.Scatter(x=ohlc.index, y=ohlc['%K'], name=f"%K - {crypto}", line=dict(color='#ff9900', width=2)))
     stochastic_fig.add_trace(go.Scatter(x=ohlc.index, y=ohlc['%D'], name=f"%D - {crypto}", line=dict(color='#000000', width=2)))
-    stochastic_fig.add_trace(go.Scatter(x=ohlc.index, y=ohlc['Overbought'], name="Overbought", line=dict(color='red', width=1), fill='tozeroy'))
-    stochastic_fig.add_trace(go.Scatter(x=ohlc.index, y=ohlc['Oversold'], name="Oversold", line=dict(color='green', width=1), fill='tozeroy'))
+
+    # Overbought and Oversold lines
+    stochastic_fig.add_trace(go.Scatter(x=ohlc.index, y=ohlc['Overbought'], name="Overbought (80-100)", line=dict(color='red', width=1)))
+    stochastic_fig.add_trace(go.Scatter(x=ohlc.index, y=ohlc['Oversold'], name="Oversold (0-20)", line=dict(color='blue', width=1)))
+
+    # Expected range shading
+    stochastic_fig.add_trace(go.Scatter(x=ohlc.index, y=ohlc['Expected_Max'], mode='lines', name="Expected Upper Bound", line=dict(color='green', width=1)))
+    stochastic_fig.add_trace(go.Scatter(x=ohlc.index, y=ohlc['Expected_Min'], mode='lines', fill='tonexty', name="Expected Lower Bound", line=dict(color='green', width=1)))
+
+
 
 # Visualization of a Moving Average for the selected cryptocurrencies
 for crypto, ohlc in ohlc_data.items():
