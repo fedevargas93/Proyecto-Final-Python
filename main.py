@@ -5,24 +5,29 @@ from plotly.subplots import make_subplots
 import streamlit as st
 from datetime import date, datetime
 
-# Function to fetch OHLC data
 def fetch_ohlc_data(pair):
     url_ohlc = f"https://api.kraken.com/0/public/OHLC?pair={pair}&interval=60"
-    response = requests.get(url_ohlc)
-    if response.status_code == 200:
-        result = response.json().get("result", {})
-        if result and list(result.keys()) and len(result[list(result.keys())[0]]) > 0:
-            ohlc = pd.DataFrame(result[list(result.keys())[0]],
-                                columns=["datetime", "open", "high", "low", "close", "vwap", "volume", "count"])
-            ohlc = ohlc.astype(
-                {'open': float, 'high': float, 'low': float, 'close': float, 'vwap': float, 'volume': float})
-            ohlc.index = pd.to_datetime(ohlc["datetime"], unit='s')
-            return ohlc
+    
+    try:
+        response = requests.get(url_ohlc)
+        if response.status_code == 200:
+            result = response.json().get("result", {})
+            
+            if result and list(result.keys()) and len(result[list(result.keys())[0]]) > 0:
+                ohlc = pd.DataFrame(result[list(result.keys())[0]],
+                                    columns=["datetime", "open", "high", "low", "close", "vwap", "volume", "count"])
+                ohlc = ohlc.astype({'open': float, 'high': float, 'low': float, 'close': float, 'vwap': float, 'volume': float})
+                ohlc.index = pd.to_datetime(ohlc["datetime"], unit='s')
+                return ohlc
+            else:
+                st.warning("No valid data available for the selected cryptocurrency pair.")
+                return None
         else:
-            st.warning("No valid data available for the selected cryptocurrency pair.")
+            st.warning("Error in API response. Please try again.")
             return None
-    else:
-        st.warning("Error in API response. Please try again.")
+
+    except Exception as e:
+        st.error(f"An error occurred: {e}")
         return None
 
 
